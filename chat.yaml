@@ -1,0 +1,97 @@
+---
+- name: Build and run Docker container for React app
+  hosts: webservers
+  become: true
+  vars:
+    docker_image_name: "chat_app"
+    docker_container_name: "chat_app_container"
+    docker_port_mapping: "3000:3000"
+  tasks:
+    
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Upgrade packages
+      apt:
+        upgrade: dist
+    
+    - name: Install pip for Docker SDK
+      become: true
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Install Docker SDK for Python
+      pip:
+        name: docker
+      become: true
+
+    # Clone the repository
+    - name: Clone repository
+      git:
+        repo: https://git.cloudavise.com/visops/t056/sample-chatapp.git
+        dest: /home/ubuntu/app
+ 
+    - name: Download Node.js binary package
+      get_url:
+        url: "https://nodejs.org/dist/v16.8.0/node-v16.8.0-linux-x64.tar.xz"
+        dest: "/tmp/node-v16.8.0-linux-x64.tar.xz"
+
+    - name: Extract Node.js binary package
+      unarchive:
+        src: "/tmp/node-v16.8.0-linux-x64.tar.xz"
+        dest: "/usr/local"
+        remote_src: yes
+        creates: "/usr/local/node-v16.8.0"
+        extra_opts: "--strip-components=1"
+
+    - name: Add Node.js binary to PATH
+      lineinfile:
+        path: "/etc/profile"
+        line: "export PATH=$PATH:/usr/local/bin"
+        state: present
+        create: yes
+        insertafter: EOF
+
+    - name: Verify Node.js installation
+      command: "node -v"
+      register: node_version
+
+    - name: Print Node.js version
+      debug:
+        var: node_version.stdout
+    
+    - name: Installing React
+      command: npm install react@17.0.2
+
+    - name: Installing React Scripts
+      command: npm install react-scripts@4.0.3
+
+    - name: Installing Node Sass version 6.0.1
+      command: npm install node-sass@6.0.1
+
+    
+    - name: Install openssl
+      apt:
+        name:
+          - openssl
+        state: present
+
+    - name: Copy Dockerfile to the webserver
+      copy:
+        src: Dockerfile
+        dest: /home/ubuntu/app/Dockerfile
+
+    - name: Build Docker image
+      docker_image:
+        name: "{{ docker_image_name }}"
+        path: /home/ubuntu/app
+
+    - name: Run Docker container
+      docker_container:
+        name: "{{ docker_container_name }}"
+        image: "{{ docker_image_name }}"
+        ports:
+          - "{{ docker_port_mapping }}"
+        restart_policy: always

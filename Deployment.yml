@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-react-deployment
+spec:
+  selector:
+    matchLabels:
+      app: my-react 
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: my-react
+    spec:
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: ecr-creds
+      containers:
+        - name: my-react-container
+          image: 210347159243.dkr.ecr.us-east-1.amazonaws.com/my-react:latest
+          imagePullPolicy: Always
+

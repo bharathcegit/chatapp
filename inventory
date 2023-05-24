@@ -1,0 +1,15 @@
+; -*-mode: ansible; coding: utf-8;-*-
+
+
+[webservers]
+
+myproject-app       ansible_host=3.83.82.132    ansible_port=22     ansible_user=ubuntu     ansible_ssh_private_key_file="/home/pawan/linux/pem/demo.pem"
+
+
+[loadbalancer]
+
+myproject-lb        ansible_host=3.231.24.187      ansible_port=22     ansible_user=ubuntu     ansible_ssh_private_key_file="/home/pawan/linux/pem/demo.pem"
+
+
+[all:vars]
+ansible_ssh_pipelining=no
